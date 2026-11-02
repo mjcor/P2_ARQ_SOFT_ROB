@@ -18,40 +18,39 @@ Uso de asistentes de IA (para qué, o «ninguno»): <<RELLENAR>>
 
 | Campo | Contenido |
 |---|---|
-| **Síntoma (lo que se observa)** | El topic `/distancia` publica a 1 Hz, aunque se esperan 10 Hz. Los otros dos topics también funcionan a 1 Hz. |
-| **Hipótesis (escrita antes del análisis completo)** | Al observar que los tres topics tenían 40 mensajes durante unos 39 segundos, sospeché que el problema comenzaba en el sensor `/distancia`, que estaba publicando más lentamente de lo esperado. Supuse que el filtro y el controlador estaban siguiendo ese mismo ritmo porque recibían menos datos desde el origen. |
-| **Comando(s)** | `python3 analiza_bag.py bags/caso_5_casa --info` y `python3 analiza_bag.py bags/caso_5_casa --esperado /distancia=10 --png informe_caso5.png` |
-| **Evidencia (salida / gráfica)** | El análisis confirma que los tres topics contienen 40 mensajes y tienen una frecuencia de 1,00 Hz. La herramienta detecta `[ERROR] RITMO_BAJO` en `/distancia`, con 1 Hz medido frente a los 10 Hz esperados. El intervalo máximo entre mensajes es de 1 segundo. Las latencias medias son pequeñas: 0,002 s para `/distancia` y 0,007 s para `/distancia_filtrada`. La gráfica `informe_caso5.png` permite observar los ritmos, las latencias y los valores de distancia. |
-| **Eslabón donde se rompe** | El problema aparece en el origen de la cadena, en el sensor que publica `/distancia`. No se observa una caída adicional de frecuencia entre el sensor, el filtro y el controlador. |
-| **Familia (estructural / dinámico / tiempo / origen)** | Fallo de origen aguas arriba, que se manifiesta como una frecuencia de publicación inferior a la esperada. |
-| **Causa raíz probable** | Es posible que el nodo del sensor tenga mal configurada su frecuencia de publicación. Por ejemplo, podría estar utilizando un temporizador de 1 segundo en lugar de 0,1 segundos. Esta causa es probable, pero no se puede confirmar únicamente con el bag. |
-| **Arreglo concreto y cómo comprobarlo** | Revisaría el código o la configuración del nodo que publica `/distancia` y ajustaría su temporizador a 0,1 segundos para conseguir 10 Hz. Después comprobaría la frecuencia con `ros2 topic hz /distancia`, grabaría un nuevo bag y volvería a ejecutar `analiza_bag.py`. El resultado esperado sería una frecuencia cercana a 10 Hz y la desaparición del error `RITMO_BAJO`. |
+| Síntoma (lo que se observa) | El topic `/distancia` publica a 1 Hz, aunque se esperan 10 Hz. Los otros dos topics también funcionan aproximadamente a 1 Hz. |
+| Hipótesis (escrita antes de ejecutar nada) | Sospeché que el problema estaba en el nodo que publica `/distancia`, posiblemente porque su temporizador estaba configurado con un periodo demasiado largo. Esto explicaría que los demás topics recibieran datos a una frecuencia inferior a la esperada. |
+| Comando(s) | `python3 analiza_bag.py bags/caso_5_casa --esperado /distancia=10 --png informe_caso5.png` |
+| Evidencia (salida / gráfica) | El análisis muestra aproximadamente 40 mensajes por topic durante 39 segundos, con frecuencias cercanas a 1 Hz. La herramienta detecta `RITMO_BAJO` en `/distancia` al compararlo con los 10 Hz esperados. |
+| Eslabón donde se rompe | El problema aparece en el origen de la cadena, en el nodo sensor que publica `/distancia`. No se observa una caída adicional de frecuencia entre los siguientes eslabones. |
+| Familia (estructural / dinámico / tiempo / origen) | Fallo de origen, con consecuencias temporales sobre el funcionamiento de la cadena. |
+| Causa raíz probable | Una configuración incorrecta del temporizador del nodo sensor. Es posible que publique cada 1 segundo en lugar de cada 0,1 segundos. Esta causa es una hipótesis que habría que confirmar revisando el código o la configuración del nodo. |
+| Arreglo concreto y cómo comprobarlo | Revisaría la configuración del temporizador del nodo que publica `/distancia` y establecería un periodo de 0,1 segundos para conseguir 10 Hz. Después grabaría un nuevo bag y repetiría el análisis con `--esperado /distancia=10` para comprobar que la frecuencia es correcta y desaparece el error. |
 
-### ¿Qué nos dice el grafo del sistema y qué nos dice el bag?
+¿Qué os dice el grafo del sistema y qué os dice el bag? (pista: comparad con el caso D de la S7) El grafo de ROS 2 permite observar los nodos, los topics y sus conexiones, pero no demuestra que los mensajes se publiquen a la frecuencia esperada. En cambio, el bag contiene los mensajes registrados y sus tiempos, por lo que permite analizar el comportamiento real del sistema. En este caso, aunque los topics están conectados, el bag demuestra que la frecuencia de publicación es de aproximadamente 1 Hz en lugar de los 10 Hz esperados. Por tanto, es necesario complementar la información del grafo con el análisis de los mensajes para detectar este tipo de fallos.
 
-El grafo de ROS 2 permite observar qué nodos y topics existen y cómo están conectados, pero no demuestra que los mensajes se estén publicando a la frecuencia adecuada.
-
-En cambio, el bag contiene los mensajes grabados y sus tiempos, por lo que permite analizar el comportamiento real del sistema.
-
-En este caso, los tres topics tienen mensajes, pero el análisis del bag demuestra que funcionan a 1 Hz en lugar de los 10 Hz esperados para el sensor.
-
-Por tanto, una conexión aparentemente correcta no garantiza que el sistema funcione correctamente. Para diagnosticarlo hay que complementar la información del grafo con mediciones, como en el método estudiado en la sesión 7.
-
-### Pregunta de control: ¿qué ocurriría sin `--esperado`?
-
-La herramienta supone por defecto que el primer topic debe funcionar a 10 Hz.
-
-Si analizáramos un sensor diseñado realmente para publicar a 1 Hz, podría detectar incorrectamente un error `RITMO_BAJO`, aunque el sensor estuviera funcionando bien.
-
-Por eso, la frecuencia esperada debería estar definida en los requisitos del sistema y reflejada en la configuración del nodo o en un contrato de pruebas. La herramienta de análisis debería consultar ese requisito, en lugar de asumir siempre una frecuencia de 10 Hz.
 ## Ejercicio 2 — Mis propios bags
 
-Bags entregados (en `bags/`, nombres que empiezan por `mi_`): <<RELLENAR>>
-Cómo los generé (comandos): <<RELLENAR>>
+Bags entregados (en `bags/`, nombres que empiezan por `mi_`): mi_sano, mi_fallo_a, mi_float y mi_float_lento, guardados en la carpeta bags/.
+Cómo los generé (comandos): 
 
-Tabla comparativa sano / con fallo (ritmos, latencia, hallazgos): <<RELLENAR>>
+sim.generar('mi_sano', '/content/autonoma/bags', frecuencia=10, duracion=40)
+sim.generar('mi_fallo_a', '/content/autonoma/bags', frecuencia=10, duracion=40, retardo_filtro=0.3)
+sim.generar('mi_float', '/content/autonoma/bags', frecuencia=10, duracion=40, tipo_mensaje='Float32')
+sim.generar('mi_float_lento', '/content/autonoma/bags', frecuencia=10, duracion=40, tipo_mensaje='Float32', retardo_filtro=0.3)
 
-**¿Qué no puede medir la herramienta con mensajes sin cabecera (`Float32`)? ¿Por qué?** <<RELLENAR>>
+Tabla comparativa sano / con fallo (ritmos, latencia, hallazgos): 
+
+| Bag | Frecuencia sensor | Frecuencia filtro | Latencia filtro | Hallazgos |
+|---|---|---|---|---|
+| mi_sano | 10 Hz | 10 Hz | 0,007 s | TODO_OK |
+| mi_fallo_a | 10 Hz | 3,33 Hz | 1,205 s | CAIDA_EN_CADENA y LATENCIA_ALTA |
+| mi_float | 10 Hz | 10 Hz | No medible | TODO_OK |
+| mi_float_lento | 10 Hz | 3,33 Hz | No medible | CAIDA_EN_CADENA |
+
+**¿Qué no puede medir la herramienta con mensajes sin cabecera (`Float32`)? ¿Por qué?** 
+Con mensajes Float32, la herramienta no puede calcular la latencia desde la generación del dato ni comprobar posibles problemas de reloj, porque estos mensajes no tienen header.stamp. Por eso, en mi_float_lento detecta CAIDA_EN_CADENA, pero no LATENCIA_ALTA, aunque el fallo sea el mismo que en mi_fallo_a. Para medir la latencia en un sistema real utilizaría mensajes con marcas temporales o registraría los tiempos de generación y recepción de cada dato.
+
 
 ## Ejercicio 3 — Extensión de la herramienta
 

@@ -1,0 +1,12 @@
+*   1adb39b Merge pull request #1 from mjcor/ej3-rango
+|\  
+| * 5a07466 Evidencias CI
+| * cffbc85 Corregir contrato de regresión y añadir mi_rango
+| * ef93482 Prueba controlada: provocar fallo en el contrato de regresión
+| * f74d1d0 Create ci.yml
+| * ee99523 Ejercicio 3: detección de rangos fuera de límites y pruebas unitarias
+|/  
+* 987b10a Ejercicio 2: generación y análisis de bags propios
+* 037a22c Ejercicio 1: análisis y diagnóstico del fallo del caso 5
+* ee04411 Creado con Colab
+* ef98a9c Create README.md

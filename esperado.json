@@ -41,6 +41,10 @@
     "mi_rango": {
       "salida": 0,
       "errores": []
+    },
+    "mi_fallo_b": {
+      "salida": 0,
+      "errores": []
     }
   }
 }

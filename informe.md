@@ -1,7 +1,7 @@
 # Práctica P2 (Tema 2) — Informe
 
-**Nombre:** <<RELLENAR>>
-**Fecha:** <<RELLENAR>>
+**Nombre:** Marina
+**Fecha:** 02/11/2026
 **Entorno usado:** (Colab / local; versión de Python; ¿ROS2? ¿cuál?) <<RELLENAR>>
 
 > Regla de oro: **hipótesis escrita ANTES de medir**. Cada afirmación lleva su evidencia (comando + salida o gráfica).
@@ -32,14 +32,14 @@ Uso de asistentes de IA (para qué, o «ninguno»): <<RELLENAR>>
 ## Ejercicio 2 — Mis propios bags
 
 Bags entregados (en `bags/`, nombres que empiezan por `mi_`): mi_sano, mi_fallo_a, mi_float y mi_float_lento, guardados en la carpeta bags/.
-Cómo los generé (comandos): 
+Cómo los generé (comandos):
 
 sim.generar('mi_sano', '/content/autonoma/bags', frecuencia=10, duracion=40)
 sim.generar('mi_fallo_a', '/content/autonoma/bags', frecuencia=10, duracion=40, retardo_filtro=0.3)
 sim.generar('mi_float', '/content/autonoma/bags', frecuencia=10, duracion=40, tipo_mensaje='Float32')
 sim.generar('mi_float_lento', '/content/autonoma/bags', frecuencia=10, duracion=40, tipo_mensaje='Float32', retardo_filtro=0.3)
 
-Tabla comparativa sano / con fallo (ritmos, latencia, hallazgos): 
+Tabla comparativa sano / con fallo (ritmos, latencia, hallazgos):
 
 | Bag | Frecuencia sensor | Frecuencia filtro | Latencia filtro | Hallazgos |
 |---|---|---|---|---|
@@ -48,17 +48,15 @@ Tabla comparativa sano / con fallo (ritmos, latencia, hallazgos):
 | mi_float | 10 Hz | 10 Hz | No medible | TODO_OK |
 | mi_float_lento | 10 Hz | 3,33 Hz | No medible | CAIDA_EN_CADENA |
 
-**¿Qué no puede medir la herramienta con mensajes sin cabecera (`Float32`)? ¿Por qué?** 
+**¿Qué no puede medir la herramienta con mensajes sin cabecera (`Float32`)? ¿Por qué?**
 Con mensajes Float32, la herramienta no puede calcular la latencia desde la generación del dato ni comprobar posibles problemas de reloj, porque estos mensajes no tienen header.stamp. Por eso, en mi_float_lento detecta CAIDA_EN_CADENA, pero no LATENCIA_ALTA, aunque el fallo sea el mismo que en mi_fallo_a. Para medir la latencia en un sistema real utilizaría mensajes con marcas temporales o registraría los tiempos de generación y recepción de cada dato.
-
-
 ## Ejercicio 3 — Extensión de la herramienta
 
-Comprobación(es) implementada(s): <<RELLENAR>>
-Decisiones de diseño (¿ERROR o WARN? ¿margen?, ¿qué falsos positivos hay?): <<RELLENAR>>
-Pruebas propias añadidas (nombre y qué comprueban): <<RELLENAR>>
-Salida de `python3 -m unittest -v test_mis_comprobaciones`: <<RELLENAR>>
-Resultado sobre `bags/mi_rango` (antes: TODO_OK; ahora: ...): <<RELLENAR>>
+Comprobación(es) implementada(s): He implementado la función `comprobar_rangos` en `mis_comprobaciones.py`. Esta función comprueba que las mediciones de un sensor Range estén dentro de los límites `min_range` y `max_range`. Cuando encuentra valores incorrectos, devuelve un hallazgo `RANGO_FUERA` que indica cuántas muestras fallan y el intervalo temporal en el que aparecen.
+Decisiones de diseño (¿ERROR o WARN? ¿margen?, ¿qué falsos positivos hay?): He elegido ERROR para `RANGO_FUERA` porque una medición fuera de los límites declarados puede indicar un dato físicamente inválido. La función admite un margen de tolerancia configurable, que por defecto es 0. Un margen demasiado pequeño puede producir falsos positivos por errores de medida o redondeo. También pueden aparecer falsos positivos si un sensor utiliza `inf` para indicar que no ha detectado ningún objeto dentro de su alcance. `FRAME_MIXTO` se plantea como WARN porque encontrar distintos `frame_id` puede indicar una inconsistencia, aunque no necesariamente demuestra un fallo. Esta segunda comprobación queda como ampliación opcional no implementada.
+Pruebas propias añadidas (nombre y qué comprueban): He añadido `test_valores_en_los_limites`, que verifica que los valores exactamente iguales al mínimo y al máximo permitidos se aceptan como válidos, y `test_dos_fallos_separados`, que comprueba que la herramienta detecta dos mediciones incorrectas no consecutivas e informa correctamente de su cantidad y sus tiempos.
+Salida de `python3 -m unittest -v test_mis_comprobaciones`: Se ejecutaron 11 pruebas en 0.322 segundos, con resultado `OK (skipped=2)`. Las 9 pruebas no omitidas fueron correctas, incluidas las dos pruebas propias. Las dos pruebas omitidas corresponden a `comprobar_frames`, que es una ampliación opcional.
+Resultado sobre `bags/mi_rango` (antes: TODO_OK; ahora: ...): Antes de implementar la comprobación, `analiza_bag.py` devolvía `TODO_OK`, aunque existían mediciones incorrectas. Después, `mis_comprobaciones.py` detecta `RANGO_FUERA` en `/distancia`, con 20 de 400 muestras fuera de rango, desde 10.10 s hasta 12.00 s, y código de salida 1. Al analizar el bag sano `caso_0_linea_base`, no se detectan problemas y el código de salida es 0.
 
 ## Ejercicio 4 — Un quinto fallo
 

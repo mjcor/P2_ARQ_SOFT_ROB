@@ -10,7 +10,7 @@
   },
   "bags": {
     "caso_0_linea_base": {
-      "salida": 1,
+      "salida": 0,
       "errores": []
     },
     "caso_1": {
@@ -37,6 +37,10 @@
       "errores": [
         "SIN_DATOS"
       ]
+    },
+    "mi_rango": {
+      "salida": 0,
+      "errores": []
     }
   }
 }
